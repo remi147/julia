@@ -24,6 +24,9 @@
 #if defined(JL_ASAN_ENABLED)
 #include <llvm/Transforms/Instrumentation/AddressSanitizer.h>
 #endif
+#if defined(JL_TSAN_ENABLED)
+#include <llvm/Transforms/Instrumentation/ThreadSanitizer.h>
+#endif
 #include <llvm/Transforms/Scalar/GVN.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
 #include <llvm/Transforms/InstCombine/InstCombine.h>
@@ -624,6 +627,7 @@ void addOptimizationPasses(legacy::PassManagerBase *PM, int opt_level,
         }
         PM->add(createMemCpyOptPass());
         PM->add(createAlwaysInlinerLegacyPass()); // Respect always_inline
+        PM->add(createLowerSimdLoopPass()); // Annotate loop marked with "loopinfo" as LLVM parallel loop
         if (lower_intrinsics) {
             PM->add(createBarrierNoopPass());
             PM->add(createLowerExcHandlersPass());
@@ -641,6 +645,9 @@ void addOptimizationPasses(legacy::PassManagerBase *PM, int opt_level,
 #endif
 #if defined(JL_MSAN_ENABLED)
         PM->add(createMemorySanitizerPass(true));
+#endif
+#if defined(JL_TSAN_ENABLED)
+        PM->add(createThreadSanitizerLegacyPassPass());
 #endif
         return;
     }
@@ -763,6 +770,9 @@ void addOptimizationPasses(legacy::PassManagerBase *PM, int opt_level,
 #endif
 #if defined(JL_MSAN_ENABLED)
     PM->add(createMemorySanitizerPass(true));
+#endif
+#if defined(JL_TSAN_ENABLED)
+    PM->add(createThreadSanitizerLegacyPassPass());
 #endif
 }
 
